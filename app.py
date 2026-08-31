@@ -1,34 +1,22 @@
 # importing the Flask from the flask module
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 import os
-import json
+import uuid
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from datetime import datetime
-
-# Check if conversation directory exists before saving files into it
-os.makedirs("conversations", exist_ok=True)
+from supabase import create_client, Client
 
 # Global Variables Scope
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client()
 
-filename = "History.json"
-memory_name = "memory.json"
-
-# The history handler
-history = []
-try:
-    with open("History.json", "r") as file:
-        saved = json.load(file)
-        history = saved.get("messages", [])
-        current_conversation_file = saved.get("current_file", None)
-except (FileNotFoundError, json.decoder.JSONDecodeError):
-    history = []
-    current_conversation_file = None
-
+#Supabse Data
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
 # List of conversational memory trigger phrases
@@ -50,9 +38,32 @@ name_triggers = ["my name is",
                  "name's",
                  "name is", ]
 
+#-----CONTEXT HANDLER HELPER FUNCTION---
+def context_handler(memory, history):
+    #This rebakes the system prompt using current memory state and instantiates a new Gemini chat session.
+    current_user = memory.get("name", "Guest")
+    saved_facts = " ".join(memory.get("facts", []))
+    memory_context = f"The user's verified name is {current_user}. Known profile facts: {saved_facts}"
+
+    system_prompt = ("You are an AI."
+                     "Your name is Maximus."
+                     "You were created by MxDudeTesters"
+                     "And you Run on a Testing Model for MxDudeTesters"
+                     "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
+                     "The Ceo has a networth of 1 Billion Dollars as of 2026"
+                     "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
+                     f"Use this background identity context to customize your dialogue. {memory_context}"
+                     )
+
+    return client.chats.create(
+        model="gemini-3.1-flash-lite",
+        config=types.GenerateContentConfig(system_instruction=system_prompt),
+        history=history,
+    )
 
 # --- HELPER FUNCTIONS FOR NAME TRIGGERS ---
 def is_likely_a_name(text):
+
     words = text.split()
 
     if not words:
@@ -73,391 +84,308 @@ def is_likely_a_name(text):
     # Passed all checks and is probably a name
     return True
 
+#PER USER MEMORY HELPER FUNCTIONS
+# --- PER-USER MEMORY HELPERS ---
+def load_user_memory(user_id):
+    if not user_id:
+        return guest_memories.get(get_guest_key(), {"name": "Guest", "facts": []})
 
-# The user memory handler
-try:
-    with open(memory_name, "r") as file:
-        memory = json.load(file)
-except(FileNotFoundError, json.decoder.JSONDecodeError):
-    # The fallback if no known memories of the user.
-    memory = {"name": "Guest", "facts": []}
-    with open(memory_name, "w") as file:
-        json.dump(memory, file, indent=4)
+    try:
+        result = supabase.table("memories").select("*").eq("uid", user_id).execute()
 
-# Ensure "facts" key always exists defensively using .get() fallback pattern
-if "facts" not in memory:
-    memory["facts"] = []
+        if result.data:
+            row = result.data[0]
+            return {"name": row.get("name") or "Friend",
+                    "facts": row.get("facts") or []}
 
-current_user = memory.get("name", "Guest")
-saved_facts = " ".join(memory.get("facts", []))
-memory_context = f"The user's verified name is {current_user}. Known profile facts: {saved_facts}"
+        starter = {"name": session.get("user_name", "Friend"), "facts": []}
+        save_user_memory(user_id, starter)
+        return starter
 
-system_prompt = ("You are an AI."
-                 "Your name is Maximus."
-                 "You were created by MxDudeTesters"
-                 "And you Run on a Testing Model for MxDudeTesters"
-                 "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-                 "The Ceo has a networth of 1 Billion Dollars as of 2026"
-                 "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-                 f"Use this background identity context to customize your dialogue. {memory_context}"
-                 )
+    except Exception as e:
+        print(f"load_user_memory error: {e}")
+        return {"name": session.get("user_name", "Friend"), "facts": []}
 
-chat = client.chats.create(model="gemini-3.1-flash-lite",
-                           config=types.GenerateContentConfig(
-                               system_instruction=system_prompt),
-                           history=history
-                           )
+
+def save_user_memory(user_id, mem):
+    if not user_id:
+        guest_memories[get_guest_key()] = mem
+        return
+
+    try:
+        supabase.table("memories").upsert({
+            "uid": user_id,
+            "name": mem.get("name", "Friend"),
+            "facts": mem.get("facts", []),
+            "updated_at": datetime.now().isoformat(),
+        }, on_conflict="uid").execute()
+    except Exception as e:
+        print(f"save_user_memory error: {e}")
+#GUEST CONVERSATION STORAGE (in memory, cleared on restart)
+guest_histories = {}
+guest_memories = {}
+
+def get_guest_key():
+    if 'guest_id' not in session:
+        session['guest_id'] = str(uuid.uuid4())
+    return session['guest_id']
+
+#PER-USER CONVERSATION HELPERS
+def list_conversations(user_id):
+    if not user_id:
+        return []
+    try:
+        result = (supabase.table('conversations')
+                  .select("id, preview, updated_at")
+                  .eq("uid", user_id)
+                  .order("updated_at", desc=True)
+                  .execute())
+        return result.data or []
+    except Exception as e:
+        print(f"list_conversations error: {e}")
+        return []
+
+def load_conversation(user_id, conv_id):
+    if not user_id or not conv_id:
+        return []
+    try:
+        result = (supabase.table('conversations')
+                  .select("messages")
+                  .eq("uid", user_id)
+                  .eq("id", conv_id)
+                  .execute())
+        if result.data:
+            return result.data[0].get("messages") or []
+        return []
+    except Exception as e:
+        print(f"load_conversation error: {e}")
+        return []
+
+def save_conversation(user_id, conv_id, messages):
+    if not user_id or not conv_id:
+        return
+
+    preview = "New conversation"
+    if messages:
+        first_text = messages[0].get("parts", [{}])[0].get("text", "")
+        preview = first_text[:30] + "..." if len(first_text) > 30 else first_text
+
+    try:
+        supabase.table("conversations").upsert({
+            "id": conv_id,
+            "uid": user_id,
+            "preview": preview,
+            "messages": messages,
+            "updated_at": datetime.now().isoformat(),
+        }, on_conflict="id").execute()
+    except Exception as e:
+        print(f"save_conversation error: {e}")
+
+def delete_conversation(user_id, conv_id):
+    if not user_id or not conv_id:
+        return
+    try:
+        (supabase.table("conversations")
+        .delete()
+        .eq("uid", user_id)
+        .eq("id", conv_id)
+        .execute())
+    except Exception as e:
+        print(f"delete_conversation error: {e}")
+
+def get_history(user_id):
+    conv_id = session.get("conversation_id")
+    if user_id:
+        return load_conversation(user_id, conv_id)
+    return guest_histories.get(get_guest_key(), [])
+
+def put_history(user_id, messages):
+    conv_id =session.get("conversation_id")
+    if user_id:
+        save_conversation(user_id, conv_id, messages)
+    else:
+        guest_histories[get_guest_key()] = messages
 
 # initializing the app
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 
 
 # defining the route or routes
 @app.route('/')
 def home():
-    return render_template("index.html", user_name=memory.get("name", "Guest"))
+    return render_template("index.html", user_name=session.get("user_name", "Guest"))
+
+@app.route('/login', methods=['GET'])
+def login():
+    return render_template("login.html")
+
+@app.route('/signup', methods=['GET'])
+def signup():
+    return render_template("signup.html")
 
 @app.route('/get-name', methods=['GET'])
 def get_name():
-    return jsonify({"name": memory.get("name", "Guest")})
+    return jsonify({"name": session.get("user_name", "Guest")})
+
+#Wake_Word Queuing
+'''@app.route('/wake-stream')
+def wake_stream():
+    def event_stream():
+        while True:
+            wake_queue.get() # blocks until something is put in the queue
+            yield "data: wake\n\n"
+    return app.response_class(event_stream(), mimetype='text/event-stream')
+'''
+#Sending Requests to JavaScript For Token
+@app.route('/verify-session', methods=['POST'])
+def verify_session():
+    data = request.json or {}
+    token = data.get('token')
+
+    if not token:
+        session.pop('user_name', None)
+        session.pop('user_id', None)
+        return jsonify({"authenticated": False, "name": "Guest"})
+    try:
+        user = supabase.auth.get_user(token)
+        display_name = user.user.user_metadata.get('display_name', 'Friend')
+        user_id = getattr(user.user, 'id', getattr(user.user, 'uid', ''))
+
+        #Remeber who logged in for this browser Session
+        session['user_name'] = display_name
+        session['user_id'] = user_id
+
+        return jsonify({
+            "authenticated": True,
+            "name": display_name,
+            "uid": user_id,
+        })
+    except Exception as e:
+        print(f"Error in verify_session: {e}")
+        session.pop('user_name', None)
+        session.pop('user_id', None)
+        return jsonify({"authenticated": False, "name": "Guest"})
+    
+#More Wake_Word Queuing
+"""@app.route('/wake-detected', methods=['POST'])
+def wake_detected():
+    wake_queue.put('wake')
+    return jsonify({"status": "ok"})
+"""
 
 # Memory wiping Route
 @app.route('/wipe-memory', methods=['POST'])
 def wipe_memory():
-    global memory, chat
-
-    # Reset memory structure in RAM
-    memory = {"name": "Guest", "facts": []}
-
-    # Persist the reset state back to disk
-    with open(memory_name, "w") as file:
-        json.dump(memory, file, indent=4)
-
-    # 3. Re-bake system prompt without old user facts or custom name
-    current_user = memory.get("name", "Guest")
-    saved_facts = " ".join(memory.get("facts", []))
-    memory_context = f"The user's verified name is {current_user}. Known profile facts: {saved_facts}"
-
-    system_prompt = (
-        "You are an AI."
-        "Your name is Maximus."
-        "You were created by MxDudeTesters"
-        "And you Run on a Testing Model for MxDudeTesters"
-        "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-        "The Ceo has a networth of 1 Billion Dollars as of 2026"
-        "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-        f"Use this background identity context to customize your dialogue. {memory_context}"
-    )
-
-    # 4. Re-instantiate the global Gemini chat session with updated system prompt
-    chat = client.chats.create(
-        model="gemini-3.1-flash-lite",
-        config=types.GenerateContentConfig(system_instruction=system_prompt),
-        history=history
-    )
-
-    return jsonify({"status": "success", "message": "Memory wiped successfully", "user_name": current_user})
-
+    user_id = session.get("user_id")
+    memory = {"name": session.get("user_name", "Guest"), "facts": []}
+    save_user_memory(user_id, memory)
+    return jsonify({"status": "success", "message": "Memory wiped success",
+                    "user_name": memory.get("name", "Guest")})
 
 # The delete chat route
 @app.route('/delete-chat', methods=['POST'])
 def delete_chat():
-    global history, chat, current_conversation_file
-
-    # Extract filename from incoming JSON payload
+    user_id = session.get('user_id')
     data = request.json or {}
-    filename_to_delete = data.get("filename")
+    conv_id = data.get("filename")
 
-    if not filename_to_delete:
-        return jsonify({"error": "No filename provided"}), 400
+    if not conv_id:
+        return jsonify({"error": "No Conversation specified"}), 400
 
-    safe_filename = os.path.basename(filename_to_delete)
-    filepath = os.path.join("conversations", safe_filename)
+    delete_conversation(user_id, conv_id)
 
-    # check if file exists on disk
-    if not os.path.exists(filepath):
-        return jsonify({"error": "File not found"}), 404
+    if session.get('conversation_id') == conv_id:
+        session.pop('conversation_id', None)
 
-    # Remove file from disk
-    try:
-        os.remove(filepath)
-    except OSError:
-        return jsonify({"error": "Failed to delete file"}), 500
-
-    # Handle Active State Reset(If the deleted file is currently open)
-    if current_conversation_file == filepath:
-        history = []
-        current_conversation_file = None
-
-        # Reset main History.json file
-        with open(filename, "w") as file:
-            json.dump({"current_file": current_conversation_file,
-                       "messages": history
-                       }, file, indent=4)
-
-        # Re-bake Gemini prompt with a clean chat session
-        all_facts = " ".join(memory.get("facts", []))
-        updated_context = f"The user's verified name is {memory.get('name', 'Guest')}. Known profile facts: {all_facts}"
-
-        updated_prompt = (
-            "You are an AI."
-            "Your name is Maximus."
-            "You were created by MxDudeTesters"
-            "And you Run on a Testing Model for MxDudeTesters"
-            "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-            "The Ceo has a networth of 1 Billion Dollars as of 2026"
-            "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-            f"Use this background identity context to customize your dialogue. {updated_context}"
-        )
-
-        chat = client.chats.create(
-            model="gemini-3.1-flash-lite",
-            config=types.GenerateContentConfig(system_instruction=updated_prompt),
-            history=history,
-        )
-
-    # 6. Return success JSON response
-    return jsonify({"status": "success", "message": f"Deleted {safe_filename}"})
+    return jsonify({"status": "success", "message": "Conversation deleted",})
 
 
 # history click app route
 @app.route('/load-chat', methods=['POST'])
 def load_chat():
-    global history, chat, current_conversation_file
-
-    # Extract filename from incoming JSON payload
+    user_id = session.get("user_id")
     data = request.json or {}
-    filename_to_load = data.get("filename")
+    conv_id = data.get("filename")
 
-    if not filename_to_load:
-        return jsonify({"error": "No filename provided"}), 400
+    if not conv_id:
+        return jsonify({"error": "No Conversation specified"}), 400
 
-    # Defensive path construction & validation
-    # Guard against directory traversal attacks by taking only the basename
-    safe_filename = os.path.basename(filename_to_load)
-    filepath = os.path.join("conversations", safe_filename)
+    history = load_conversation(user_id, conv_id)
+    session['conversation_id'] = conv_id
 
-    if not os.path.exists(filepath):
-        return jsonify({"error": "File not found"}), 404
-
-    # Read saved history from disk
-    try:
-        with open(filepath, "r") as file:
-            loaded_history = json.load(file)
-    except (json.JSONDecodeError, OSError):
-        return jsonify({"error": "Failed to read conversation file"}), 500
-
-    # Mutate server state(RAM)
-    history = loaded_history
-    current_conversation_file = filepath
-    # Also sync the active History.json on disk to reflect this restored session
-    with open(filename, "w") as file:
-        json.dump({"current_file": current_conversation_file,
-                   "messages": history
-                   }, file, indent=4)
-
-    # Re-bake Gemini prompt & re-create chat instance with restored history
-    all_facts = " ".join(memory.get("facts", []))
-    updated_context = f"The user's verified name is {memory.get('name', 'Guest')}. Known profile facts: {all_facts}"
-    updated_prompt = (
-        "You are an AI."
-        "Your name is Maximus."
-        "You were created by MxDudeTesters"
-        "And you Run on a Testing Model for MxDudeTesters"
-        "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-        "The Ceo has a networth of 1 Billion Dollars as of 2026"
-        "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-        f"Use this background identity context to customize your dialogue. {updated_context}"
-    )
-
-    chat = client.chats.create(
-        model="gemini-3.1-flash-lite",
-        config=types.GenerateContentConfig(system_instruction=updated_prompt),
-        history=history,
-    )
-
-    # 6. Return loaded messages back to frontend UI
     return jsonify({"status": "success", "history": history})
 
 
 @app.route('/conversations', methods=['GET'])
 def get_conversations():
-    conversations_dir = "conversations"
-    saved_chats = []
+    user_id = session.get("user_id")
+    rows = list_conversations(user_id)
 
-    if os.path.exists(conversations_dir):
-        for file_name in os.listdir(conversations_dir):
-            if file_name.endswith(".json"):
-                file_path = os.path.join(conversations_dir, file_name)
-                try:
-                    with open(file_path, "r") as file:
-                        chat_data = json.load(file)
+    conversations = [{
+        "id": row["id"],
+        "filename": row["id"],
+        "preview": row.get("preview") or "Untitled conversation",
+    } for row in rows]
 
-                        preview = "Empty Conversation"
-                        if chat_data:
-                            first_msg = chat_data[0].get("parts", [{}])[0].get("text", "")
-                            preview = first_msg[:30] + "..." if len(first_msg) > 30 else first_msg
-
-                        mod_time = os.path.getmtime(file_path)
-
-                        saved_chats.append({
-                            "id": file_name,
-                            "filename": file_name,
-                            "preview": preview,
-                            "timestamp": mod_time
-                        })
-                except(json.JSONDecodeError, OSError):
-                    continue
-
-    saved_chats.sort(key=lambda x: x["timestamp"], reverse=True)
-    return jsonify({"conversations": saved_chats})
+    return jsonify({"conversations": conversations})
 
 
 @app.route('/new-chat', methods=['POST'])
 def new_chat():
-    global history, chat, current_conversation_file
+    user_id = session.get("user_id")
+    session.pop('conversation_id', None)
 
-    # Save current history if there are messages to save
-    if history:
-        save_path = current_conversation_file or os.path.join("conversations",
-                                                              f"chat_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.json")
-        with open(save_path, "w") as file:
-            json.dump(history, file, indent=4)
-    # Clear history in RAM and reset main History.json
-    history = []
+    if not user_id:
+        guest_histories.pop(get_guest_key(), None)
 
-    current_conversation_file = None
-    with open(filename, "w") as file:
-        json.dump({"current_file": current_conversation_file,
-                   "messages": history
-                   }, file, indent=4)
-
-    # Recreating the chat session with clean history
-    all_facts = " ".join(memory.get("facts", []))
-    updated_context = f"The user's verified name is {memory.get('name', 'Guest')}. Known profile facts: {all_facts}"
-
-    updated_prompt = (
-        "You are an AI."
-        "Your name is Maximus."
-        "You were created by MxDudeTesters"
-        "And you Run on a Testing Model for MxDudeTesters"
-        "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-        "The Ceo has a networth of 1 Billion Dollars as of 2026"
-        "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-        f"Use this background identity context to customize your dialogue. {updated_context}"
-    )
-
-    chat = client.chats.create(
-        model="gemini-3.1-flash-lite",
-        config=types.GenerateContentConfig(system_instruction=updated_prompt),
-        history=history,
-    )
-
-    # 4. Return success JSON response
     return jsonify({"status": "success", "message": "New chat session started"})
-
 
 @app.route('/chat', methods=['POST'])
 def chat_handler():
-    global chat, memory, history, current_conversation_file
+    user_id = session.get("user_id")
+    memory = load_user_memory(user_id)
 
     user_message = request.json.get("message")
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
 
-    if not current_conversation_file:
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        current_conversation_file = os.path.join("conversations", f"chat_{timestamp}.json")
+    if not session.get('conversation_id'):
+        session['conversation_id'] = str(uuid.uuid4())
 
+    history = get_history(user_id)
     clean_message = user_message.lower().strip()
 
-    # ----NAME TRIGGER DETECTION ----
+    #NAME TRIGGER DETECTION
     for trigger in name_triggers:
         if trigger in clean_message:
-            # extract the text after the trigger
             trigger_index = clean_message.find(trigger)
             extracted = clean_message[trigger_index + len(trigger):].strip()
-            # check if it looks like a name
             if is_likely_a_name(extracted):
-                # Update memory dictionary in RAM
                 memory["name"] = extracted.title()
-
-                # Save updated memory to memory.json
-                with open(memory_name, "w") as file:
-                    json.dump(memory, file, indent=4)
-
-                # Re-bake system prompt & chat instance with  new name
-                all_facts = " ".join(memory.get("facts", []))
-                updated_context = f"The user's verified name is {memory['name']}. Known profile facts: {all_facts}"
-
-                updated_prompt = (
-                    "You are an AI."
-                    "Your name is Maximus."
-                    "You were created by MxDudeTesters"
-                    "And you Run on a Testing Model for MxDudeTesters"
-                    "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-                    "The Ceo has a networth of 1 Billion Dollars as of 2026"
-                    "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-                    f"Use this background identity context to customize your dialogue. {updated_context}"
-                )
-
-                chat = client.chats.create(
-                    model="gemini-3.1-flash-lite",
-                    config=types.GenerateContentConfig(system_instruction=updated_prompt),
-                    history=history,
-                )
+                save_user_memory(user_id, memory)
                 break
-    # ---- MEMORY TRIGGER DETECTION ----
+
+    #MEMORY TRIGGER DETECTION
     if any(trigger in clean_message for trigger in memory_triggers):
-        # loop through to pinpoint exactly which trigger phrase was hit
         for trigger in memory_triggers:
             if trigger in clean_message:
-                # Extract the fact by stripping the trigger string out
-                clean_fact = user_message.replace(trigger, " ").replace(trigger.capitalize(), "").strip()
-
-                # Update RAM
+                clean_fact = user_message.replace(trigger, "").replace(trigger.capitalize(), "").strip()
                 memory["facts"].append(clean_fact)
+                save_user_memory(user_id, memory)
+                break
 
-                # Save data in memory.json
-                with open(memory_name, "w") as file:
-                    json.dump(memory, file, indent=4)
-
-                # Rebuild and re-bake prompt configuration parameters
-                all_facts = " ".join(memory.get("facts", []))
-                updated_context = f"The user's verified name is {memory.get('name', 'Guest')}. Known profile facts: {all_facts}"
-
-                updated_prompt = ("You are an AI."
-                                  "Your name is Maximus."
-                                  "You were created by MxDudeTesters"
-                                  "And you Run on a Testing Model for MxDudeTesters"
-                                  "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-                                  "The Ceo has a networth of 1 Billion Dollars as of 2026"
-                                  "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-                                  f"Use this background identity context to customize your dialogue. {updated_context}"
-                                  )
-
-                chat = client.chats.create(model="gemini-3.1-flash-lite",
-                                           config=types.GenerateContentConfig(
-                                               system_instruction=updated_prompt),
-                                           history=history
-                                           )
-                break  # The trigger has been found and cleaned up. Break the inner lookup loop.
+    chat = context_handler(memory, history)
 
     history.append({"role": "user", "parts": [{"text": user_message}]})
     response = chat.send_message(user_message)
     ai_response = response.text
     history.append({"role": "model", "parts": [{"text": ai_response}]})
 
-    with open(filename, "w") as file:
-        json.dump({"current_file": current_conversation_file,
-                   "messages": history
-                   }, file, indent=4)
-
-    if current_conversation_file:
-        with open(current_conversation_file, "w") as file:
-            json.dump(history, file, indent=4)
+    put_history(user_id, history)
 
     return jsonify({"response": ai_response})
+
 
 
 if __name__ == '__main__':

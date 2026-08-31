@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Sign In — Maximus</title>
+  
+  <!-- SEO Optimization -->
+  <meta name="description" content="Sign in to Maximus — your calm, mindful AI companion.">
+  <meta name="theme-color" content="#FAF9F6">
+
+  <!-- Google Fonts: Newsreader (Editorial Serif) & Instrument Sans (Humanist Sans-serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&display=swap" rel="stylesheet">
+
+  <style>
+    /* -------------------------------------------------------------
+       1. DESIGN SYSTEM & VARIABLES
+       ------------------------------------------------------------- */
+    :root {
+      /* Colors */
+      --color-bg-base: #FAF9F6;          /* Warm alabaster cream */
+      --color-bg-sidebar: #F0EEEA;       /* Soft neutral grey-cream */
+      --color-bg-card: #FFFFFF;          /* Pure white paper */
+      --color-text-charcoal: #2E3330;     /* Charcoal with warm green undertone */
+      --color-text-muted: #6B736E;       /* Muted gray-green */
+      
+      --color-sage-accent: #73907C;      /* Signature sage green */
+      --color-sage-hover: #5A7763;       /* Darker hover state */
+      --color-sage-light: #E5EDE8;       /* Light sage wash */
+      
+      --color-forest-secondary: #3D5446;  /* Forest-green accent */
+      --color-error-bg: #FDF4F2;         /* Soft warm terracotta pink for error */
+      --color-error-text: #B25D4E;       /* Terracotta dark red */
+
+      /* Typography */
+      --font-serif: 'Newsreader', Georgia, serif;
+      --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+
+      /* Spacing & Borders */
+      --border-radius: 14px;
+      --border-radius-card: 18px;
+      --shadow-subtle: 0 4px 16px rgba(46, 51, 48, 0.03);
+      --shadow-card: 0 12px 36px rgba(46, 51, 48, 0.05), 0 2px 8px rgba(46, 51, 48, 0.02);
+
+      /* Transitions */
+      --transition-fast: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: all 300ms cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    }
+
+    /* -------------------------------------------------------------
+       2. RESET & BASE LAYOUT
+       ------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      min-height: 100dvh;
+      font-family: var(--font-sans);
+      background-color: var(--color-bg-base);
+      color: var(--color-text-charcoal);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.25rem;
+    }
+
+    /* -------------------------------------------------------------
+       3. AUTH CONTAINER & CARD
+       ------------------------------------------------------------- */
+    .auth-wrapper {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeIn 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    /* Centered Brand Header */
+    .brand-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: var(--color-text-charcoal);
+      margin-bottom: 1.75rem;
+      text-align: center;
+    }
+
+    .brand-header .logo-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background-color: var(--color-sage-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-bg-card);
+      margin-bottom: 0.85rem;
+      box-shadow: 0 4px 12px rgba(115, 144, 124, 0.25);
+      transition: var(--transition-fast);
+    }
+
+    .brand-header:hover .logo-box {
+      background-color: var(--color-sage-hover);
+      transform: translateY(-1px);
+    }
+
+    .brand-header h1 {
+      font-family: var(--font-serif);
+      font-size: 1.9rem;
+      font-weight: 450;
+      letter-spacing: -0.015em;
+      color: var(--color-text-charcoal);
+      line-height: 1.2;
+    }
+
+    .brand-header p {
+      font-size: 0.88rem;
+      color: var(--color-text-muted);
+      margin-top: 0.35rem;
+    }
+
+    /* Card Box */
+    .auth-card {
+      width: 100%;
+      background-color: var(--color-bg-card);
+      border: 1px solid rgba(46, 51, 48, 0.06);
+      border-radius: var(--border-radius-card);
+      padding: 2.25rem 2rem;
+      box-shadow: var(--shadow-card);
+    }
+
+    .card-title {
+      font-family: var(--font-serif);
+      font-size: 1.45rem;
+      font-weight: 450;
+      color: var(--color-text-charcoal);
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.01em;
+    }
+
+    .card-subtitle {
+      font-size: 0.84rem;
+      color: var(--color-text-muted);
+      margin-bottom: 1.75rem;
+      line-height: 1.4;
+    }
+
+    /* -------------------------------------------------------------
+       4. FORM ELEMENTS
+       ------------------------------------------------------------- */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    label {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--color-text-charcoal);
+      letter-spacing: 0.01em;
+    }
+
+    .forgot-link {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--color-sage-accent);
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+
+    .forgot-link:hover {
+      color: var(--color-sage-hover);
+      text-decoration: underline;
+    }
+
+    .input-field {
+      width: 100%;
+      background-color: var(--color-bg-base);
+      border: 1px solid rgba(46, 51, 48, 0.12);
+      border-radius: 10px;
+      padding: 0.75rem 0.95rem;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      color: var(--color-text-charcoal);
+      transition: var(--transition-fast);
+      outline: none;
+    }
+
+    .input-field::placeholder {
+      color: rgba(107, 115, 110, 0.55);
+    }
+
+    .input-field:focus {
+      border-color: var(--color-sage-accent);
+      background-color: var(--color-bg-card);
+      box-shadow: 0 0 0 3px rgba(115, 144, 124, 0.15);
+    }
+
+    /* -------------------------------------------------------------
+       5. BUTTONS, ALERTS & ACTIONS
+       ------------------------------------------------------------- */
+    .btn-submit {
+      width: 100%;
+      background-color: var(--color-sage-accent);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 10px;
+      padding: 0.8rem 1.25rem;
+      font-size: 0.92rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: var(--transition-fast);
+      margin-top: 0.5rem;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background-color: var(--color-sage-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(115, 144, 124, 0.25);
+    }
+
+    .btn-submit:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    /* Inline Alert Box (Error / Success) */
+    .alert-message {
+      display: none;
+      align-items: flex-start;
+      gap: 0.6rem;
+      background-color: var(--color-error-bg);
+      border: 1px solid rgba(178, 93, 78, 0.2);
+      color: var(--color-error-text);
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      margin-top: 1rem;
+      animation: fadeIn 200ms ease forwards;
+    }
+
+    .alert-message.visible {
+      display: flex;
+    }
+
+    .alert-message.success {
+      background-color: var(--color-sage-light);
+      border-color: rgba(115, 144, 124, 0.3);
+      color: var(--color-forest-secondary);
+    }
+
+    .alert-icon {
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .alert-text {
+      flex: 1;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.35rem 0;
+      text-align: center;
+      color: var(--color-text-muted);
+      font-size: 0.78rem;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid rgba(46, 51, 48, 0.08);
+    }
+
+    .divider span {
+      padding: 0 0.75rem;
+      opacity: 0.7;
+    }
+
+    /* Google Button (Placeholder) */
+    .btn-google {
+      width: 100%;
+      background-color: var(--color-bg-card);
+      border: 1px solid rgba(115, 144, 124, 0.25);
+      color: var(--color-text-muted);
+      border-radius: 10px;
+      padding: 0.72rem 1.2rem;
+      font-size: 0.86rem;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      cursor: default;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      transition: var(--transition-fast);
+      opacity: 0.75;
+      position: relative;
+    }
+
+    .btn-google:hover {
+      border-color: rgba(115, 144, 124, 0.4);
+    }
+
+    .btn-google:hover .google-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .google-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background-color: var(--color-text-charcoal);
+      color: #FFFFFF;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+      box-shadow: 0 2px 8px rgba(46, 51, 48, 0.15);
+      z-index: 10;
+    }
+
+    .google-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--color-text-charcoal);
+    }
+
+    /* Footer Switch Link */
+    .auth-footer-text {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.84rem;
+      color: var(--color-text-muted);
+    }
+
+    .auth-footer-text a {
+      color: var(--color-sage-accent);
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+
+    .auth-footer-text a:hover {
+      color: var(--color-sage-hover);
+      text-decoration: underline;
+    }
+
+    /* Back Link */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 1.6rem;
+      color: var(--color-text-muted);
+      font-size: 0.82rem;
+      text-decoration: none;
+      transition: var(--transition-fast);
+      opacity: 0.8;
+    }
+
+    .back-link:hover {
+      opacity: 1;
+      color: var(--color-text-charcoal);
+    }
+
+    /* -------------------------------------------------------------
+       6. ANIMATIONS & RESPONSIVE BREAKPOINTS
+       ------------------------------------------------------------- */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 1.5rem 1rem;
+      }
+
+      .auth-card {
+        padding: 1.75rem 1.25rem;
+      }
+
+      .brand-header h1 {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <main class="auth-wrapper">
+    <!-- Maximus Brand & Logo -->
+    <a href="/" class="brand-header" aria-label="Maximus Home">
+      <div class="logo-box">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5"/>
+          <path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <h1>Maximus</h1>
+      <p>A calm, thoughtful space for your reflections</p>
+    </a>
+
+    <!-- Clean Centered Sign In Card -->
+    <div class="auth-card">
+      <h2 class="card-title">Sign in</h2>
+      <p class="card-subtitle">Enter your details to continue to your memories</p>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="email">Email address</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            class="input-field" 
+            placeholder="you@example.com" 
+            required 
+            autocomplete="email"
+          >
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password">Password</label>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            class="input-field" 
+            placeholder="••••••••" 
+            required 
+            autocomplete="current-password"
+          >
+        </div>
+
+        <!-- Sage Green Sign In Button -->
+        <button type="submit" id="submit-btn" class="btn-submit" aria-label="Sign in to your account">
+          Sign In
+        </button>
+
+        <!-- Clean Inline Error/Status Message -->
+        <div id="alert-message" class="alert-message" role="alert" aria-live="polite">
+          <svg class="alert-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" x2="12" y1="8" y2="12"/>
+            <line x1="12" x2="12.01" y1="16" y2="16"/>
+          </svg>
+          <span id="alert-text" class="alert-text"></span>
+        </div>
+      </form>
+
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <!-- Muted Continue with Google Button -->
+      <button class="btn-google" type="button" aria-label="Continue with Google — Coming Soon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+        <span class="google-tooltip">Coming Soon</span>
+      </button>
+
+      <!-- Switch to Sign Up -->
+      <p class="auth-footer-text">
+        Don't have an account? <a href="/signup">Create one</a>
+      </p>
+    </div>
+
+    <!-- Back to Chat Link -->
+    <a href="/" class="back-link" aria-label="Return to Maximus chat">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" x2="5" y1="12" y2="12"/>
+        <polyline points="12 19 5 12 12 5"/>
+      </svg>
+      Back to Maximus
+    </a>
+  </main>
+
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <!-- Supabase Auth Logic -->
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://zzgpqgsievbsglswhivp.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_JRoPyAzngADYmyARCIMSkA_UfFKedb3';
+    
+    // Initialize Supabase Client
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+    const loginForm = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const submitBtn = document.getElementById('submit-btn');
+    const alertBox = document.getElementById('alert-message');
+    const alertText = document.getElementById('alert-text');
+
+    function showError(message) {
+      if (!alertBox || !alertText) return;
+      alertText.textContent = message;
+      alertBox.className = 'alert-message visible';
+    }
+
+    function hideAlert() {
+      if (!alertBox) return;
+      alertBox.className = 'alert-message';
+      if (alertText) alertText.textContent = '';
+    }
+
+    if (loginForm) {
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!email) {
+          showError('Please enter your email address.');
+          emailInput.focus();
+          return;
+        }
+
+        if (!password) {
+          showError('Please enter your password.');
+          passwordInput.focus();
+          return;
+        }
+
+        if (!supabaseClient) {
+          showError('Supabase client failed to load. Please check your internet connection.');
+          return;
+        }
+
+        // Set button loading state
+        submitBtn.disabled = true;
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = 'Signing in...';
+
+        try {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+          });
+
+          if (error) {
+            showError(error.message || 'Unable to sign in. Please verify your credentials.');
+          } else if (data && data.session) {
+            // Token is stored automatically by supabase-js in localStorage
+            if (data.session.access_token) {
+              localStorage.setItem('sb-access-token', data.session.access_token);
+            }
+            window.location.href = '/';
+          } else {
+            window.location.href = '/';
+          }
+        } catch (err) {
+          showError(err.message || 'An unexpected error occurred. Please try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

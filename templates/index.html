@@ -282,6 +282,360 @@
       gap: 0.5rem;
     }
 
+    /* Sidebar Auth Buttons */
+    .sidebar-auth-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(46, 51, 48, 0.06);
+      margin-top: 0.25rem;
+    }
+
+    .btn-sign-in {
+      width: 100%;
+      background-color: var(--color-sage-accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--border-radius);
+      padding: 0.65rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: var(--transition-fast);
+    }
+
+    .btn-sign-in:hover {
+      background-color: var(--color-sage-hover);
+    }
+
+    .btn-google {
+      width: 100%;
+      background: none;
+      border: 1px solid rgba(115, 144, 124, 0.2);
+      color: var(--color-text-muted);
+      border-radius: var(--border-radius);
+      padding: 0.6rem 1rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      font-family: var(--font-sans);
+      cursor: default;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: var(--transition-fast);
+      opacity: 0.6;
+      position: relative;
+    }
+
+    .btn-google:hover .google-tooltip {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    .google-tooltip {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background-color: var(--color-text-charcoal);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding: 0.3rem 0.65rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms ease, transform 200ms ease;
+    }
+
+    .google-tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--color-text-charcoal);
+    }
+
+    /* Sidebar Profile Section (Authenticated — Claude / ChatGPT Style) */
+    .sidebar-profile-container {
+      position: relative;
+      width: 100%;
+      padding-top: 0.5rem;
+      border-top: 1px solid rgba(46, 51, 48, 0.06);
+      margin-top: 0.25rem;
+    }
+
+    .profile-btn {
+      width: 100%;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: var(--border-radius);
+      padding: 0.5rem 0.65rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: var(--transition-fast);
+      color: var(--color-text-charcoal);
+      text-align: left;
+    }
+
+    .profile-btn:hover, .profile-btn.active {
+      background-color: rgba(46, 51, 48, 0.05);
+    }
+
+    .profile-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--color-sage-accent);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .profile-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .profile-name {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 550;
+      color: var(--color-text-charcoal);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .profile-chevron {
+      color: var(--color-text-muted);
+      transition: transform var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .profile-btn.active .profile-chevron {
+      transform: rotate(180deg);
+    }
+
+    /* Profile Popup Menu (Positioned above profile button) */
+    .profile-popup-menu {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background-color: var(--color-bg-card);
+      border: 1px solid rgba(46, 51, 48, 0.08);
+      border-radius: var(--border-radius);
+      box-shadow: 0 10px 28px rgba(46, 51, 48, 0.08);
+      padding: 0.35rem;
+      z-index: 150;
+      animation: fadeIn 150ms ease forwards;
+    }
+
+    .profile-popup-menu.open {
+      display: block;
+    }
+
+    .profile-menu-item {
+      width: 100%;
+      background: none;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.84rem;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--color-error-text);
+      transition: var(--transition-fast);
+      text-align: left;
+    }
+
+    .profile-menu-item:hover {
+      background-color: var(--color-error-bg);
+    }
+
+    /* Guest Sidebar History Prompt */
+    .history-guest-prompt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 1.2rem;
+      color: var(--color-text-muted);
+      font-size: 0.82rem;
+      line-height: 1.45;
+      gap: 0.65rem;
+    }
+
+    .history-guest-prompt p {
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    .history-guest-prompt a {
+      color: var(--color-sage-accent);
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      transition: color 150ms ease;
+    }
+
+    .history-guest-prompt a:hover {
+      color: var(--color-sage-hover);
+      text-decoration: underline;
+    }
+
+    /* Guest Banner — compact pill */
+    .guest-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      padding: 0.5rem 1.1rem;
+      width: fit-content;
+      max-width: 65%;
+      margin: 0 auto 0.5rem auto;
+      background-color: var(--color-sage-light);
+      border: 1px solid rgba(115, 144, 124, 0.12);
+      border-radius: 999px;
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      font-family: var(--font-sans);
+      animation: fadeIn 300ms ease;
+    }
+
+    .guest-banner-text {
+      flex: 1;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+
+    .guest-banner-text a {
+      color: var(--color-sage-accent);
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+
+    .guest-banner-text a:hover {
+      color: var(--color-sage-hover);
+      text-decoration: underline;
+    }
+
+    .guest-banner-dismiss {
+      background: none;
+      border: none;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      padding: 2px;
+      opacity: 0.45;
+      transition: opacity 150ms ease;
+      flex-shrink: 0;
+      line-height: 0;
+    }
+
+    .guest-banner-dismiss:hover {
+      opacity: 1;
+    }
+
+    .guest-banner.hidden {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .guest-banner {
+        max-width: 92%;
+      }
+      .guest-banner-text {
+        white-space: normal;
+      }
+    }
+
+    /* Landscape phones — keep banner compact and centered */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .guest-banner {
+        max-width: 55%;
+        padding: 0.4rem 1rem;
+        margin-bottom: 0.35rem;
+      }
+    }
+
+    /* Hero Greeting — near input, bottom-aligned */
+    .hero-greeting {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      padding: 0.8rem 1rem 0.3rem 1rem;
+      animation: heroFadeIn 500ms ease forwards;
+    }
+
+    .hero-greeting.hidden {
+      display: none;
+    }
+
+    .hero-greeting-text {
+      font-family: var(--font-serif);
+      font-size: 2rem;
+      font-weight: 500;
+      color: var(--color-text-charcoal);
+      opacity: 0.75;
+      text-align: center;
+      padding: 0 1.5rem;
+      line-height: 1.3;
+      letter-spacing: -0.015em;
+      user-select: none;
+    }
+
+    @media (max-width: 600px) {
+      .hero-greeting-text {
+        font-size: 1.5rem;
+        padding: 0 1rem;
+      }
+    }
+
+    @media (max-height: 500px) and (orientation: landscape) {
+      .hero-greeting {
+        padding: 0.4rem 1rem 0.15rem 1rem;
+      }
+      .hero-greeting-text {
+        font-size: 1.35rem;
+      }
+    }
+
+    @keyframes heroFadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* Secondary Action Button (Ghost / Outline Style) */
     .btn-secondary {
       width: 100%;
@@ -1053,6 +1407,54 @@
           </svg>
           Test Error State
         </button>
+
+        <!-- Guest Auth Buttons (Sign In & Continue with Google) -->
+        <div class="sidebar-auth-section" id="sidebar-auth-section">
+          <button class="btn-sign-in" onclick="window.location.href='/login'" aria-label="Sign in">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" x2="3" y1="12" y2="12"/>
+            </svg>
+            Sign In
+          </button>
+          <button class="btn-google" aria-label="Continue with Google — Coming Soon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            Continue with Google
+            <span class="google-tooltip">Coming Soon</span>
+          </button>
+        </div>
+
+        <!-- Authenticated Profile Section (Claude / ChatGPT style) -->
+        <div class="sidebar-profile-container" id="sidebar-profile-container" style="display: none;">
+          <!-- Profile Popup Menu -->
+          <div class="profile-popup-menu" id="profile-popup-menu" onclick="event.stopPropagation()">
+            <button class="profile-menu-item" onclick="handleSignOut()" type="button" aria-label="Sign out">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Sign Out
+            </button>
+          </div>
+
+          <!-- Profile Button -->
+          <button class="profile-btn" id="profile-btn" onclick="toggleProfileMenu(event)" type="button" aria-haspopup="true" aria-expanded="false" aria-label="User profile">
+            <div class="profile-avatar" id="profile-avatar">M</div>
+            <div class="profile-info">
+              <span class="profile-name" id="profile-name">User</span>
+            </div>
+            <svg class="profile-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -1129,10 +1531,12 @@
 
       <!-- Scrolling conversation viewport -->
       <div class="chat-window-container">
-        <div id="chat-window" role="log" aria-live="polite">
+        <div id="chat-window" role="log" aria-live="polite" style="position: relative;">
           
-          <!-- Empty State (Shown initially) -->
-          <div class="empty-state" id="empty-state">
+          <!-- Hero greeting moved outside chat-window, closer to input -->
+
+          <!-- Empty State (Hidden by default now, kept for prompt suggestions) -->
+          <div class="empty-state" id="empty-state" style="display: none;">
             <div class="empty-icon">
               <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -1156,6 +1560,20 @@
           </div>
 
         </div>
+      </div>
+
+      <!-- Hero Greeting (shown just above banner, near input) -->
+      <div class="hero-greeting" id="hero-greeting"></div>
+
+      <!-- Guest Banner -->
+      <div class="guest-banner" id="guest-banner">
+        <span class="guest-banner-text">Chatting as Guest — <a href="/login">Sign in</a> to save your memories across devices.</span>
+        <button class="guest-banner-dismiss" id="guest-banner-dismiss" aria-label="Dismiss banner">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" x2="6" y1="6" y2="18"/>
+            <line x1="6" x2="18" y1="6" y2="18"/>
+          </svg>
+        </button>
       </div>
 
       <!-- Fixed Composer Area -->
@@ -1200,9 +1618,14 @@
 
   </div>
 
+
   <!-- Vanilla JavaScript Implementation -->
   <script>
+    // Supabase Client Initialization
+    
+
     let userName = "{{ user_name }}";
+    let isAuthenticated = false;
 
     const appSidebar = document.getElementById('app-sidebar');
     const sidebarBackdrop = document.getElementById('sidebar-backdrop');
@@ -1216,6 +1639,130 @@
     // Voice State Tracker
     let wasVoiceInput = false;
     let isFirstMessage = true;
+
+    // Guest Banner Logic
+    const guestBanner = document.getElementById('guest-banner');
+    const guestBannerDismiss = document.getElementById('guest-banner-dismiss');
+
+    // Hide banner if already dismissed this session
+    if (sessionStorage.getItem('guestBannerDismissed') === 'true' && guestBanner) {
+      guestBanner.classList.add('hidden');
+    }
+
+    function dismissGuestBanner() {
+      if (guestBanner && !guestBanner.classList.contains('hidden')) {
+        guestBanner.classList.add('hidden');
+        sessionStorage.setItem('guestBannerDismissed', 'true');
+      }
+    }
+
+    if (guestBannerDismiss) {
+      guestBannerDismiss.addEventListener('click', dismissGuestBanner);
+    }
+
+    // -------------------------------------------------------------
+    // AUTHENTICATION & SESSION HANDLING
+    // -------------------------------------------------------------
+    async function verifyUserSession() {
+    const token = localStorage.getItem('sb-access-token');
+    
+    if (token) {
+        try {
+            const res = await fetch('/verify-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: token })
+            });
+            const data = await res.json();
+            if (data && data.authenticated) {
+                applyAuthState(true, data.name || 'Friend');
+                return;
+            }
+        } catch (err) {
+            console.error('Session verification error:', err);
+        }
+    }
+    applyAuthState(false, 'Guest');
+}
+
+    function applyAuthState(authenticated, name) {
+      isAuthenticated = authenticated;
+      userName = name || (authenticated ? 'Friend' : 'Guest');
+
+      const sidebarAuthSection = document.getElementById('sidebar-auth-section');
+      const sidebarProfileContainer = document.getElementById('sidebar-profile-container');
+      const profileNameEl = document.getElementById('profile-name');
+      const profileAvatarEl = document.getElementById('profile-avatar');
+
+      if (authenticated) {
+        // 1. Hide guest banner above input entirely
+        if (guestBanner) {
+          guestBanner.style.display = 'none';
+          guestBanner.classList.add('hidden');
+        }
+
+        // 2. Hide Sign In and Continue with Google buttons in sidebar
+        if (sidebarAuthSection) {
+          sidebarAuthSection.style.display = 'none';
+        }
+
+        // 3. Show profile section in sidebar footer
+        if (sidebarProfileContainer) {
+          sidebarProfileContainer.style.display = 'block';
+        }
+        if (profileNameEl) {
+          profileNameEl.textContent = userName;
+        }
+        if (profileAvatarEl) {
+          const initial = (userName.charAt(0) || 'U').toUpperCase();
+          profileAvatarEl.textContent = initial;
+        }
+      } else {
+        // Guest mode
+        if (sidebarProfileContainer) {
+          sidebarProfileContainer.style.display = 'none';
+        }
+        if (sidebarAuthSection) {
+          sidebarAuthSection.style.display = 'flex';
+        }
+        if (guestBanner && sessionStorage.getItem('guestBannerDismissed') !== 'true') {
+          guestBanner.style.display = 'flex';
+          guestBanner.classList.remove('hidden');
+        }
+      }
+    }
+
+    function toggleProfileMenu(event) {
+      if (event) event.stopPropagation();
+      const menu = document.getElementById('profile-popup-menu');
+      const btn = document.getElementById('profile-btn');
+      if (menu) {
+        const isOpen = menu.classList.toggle('open');
+        if (btn) {
+          btn.classList.toggle('active', isOpen);
+          btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+      }
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('profile-popup-menu');
+      const btn = document.getElementById('profile-btn');
+      if (menu && menu.classList.contains('open')) {
+        if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) {
+          menu.classList.remove('open');
+          if (btn) {
+            btn.classList.remove('active');
+            btn.setAttribute('aria-expanded', 'false');
+          }
+        }
+      }
+    });
+
+    async function handleSignOut() {
+  localStorage.removeItem('sb-access-token');
+  window.location.href = '/';
+}
 
     // Speech Recognition API setup
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1325,6 +1872,18 @@
       }
     });
 
+    // Global Ctrl+Space shortcut to toggle voice listening
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === ' ' || e.code === 'Space')) {
+        // Skip if user is actively typing in the input textarea
+        if (document.activeElement === userInput || e.target === userInput) {
+          return;
+        }
+        e.preventDefault();
+        toggleListening();
+      }
+    });
+
     // Dismiss Error Banner
     function dismissError() {
       errorBanner.style.display = 'none';
@@ -1401,19 +1960,23 @@
         // Reset first message flag for new conversation
         isFirstMessage = true;
 
-        // Fetch fresh user name from GET /get-name before triggering greeting
-        fetch('/get-name')
-          .then(res => res.json())
-          .then(nameData => {
-            if (nameData && nameData.name) {
-              userName = nameData.name;
-            }
-            triggerGreeting();
-          })
-          .catch(err => {
-            console.error('Error fetching user name:', err);
-            triggerGreeting();
-          });
+        // Trigger greeting (maintains authenticated userName if logged in)
+        if (!isAuthenticated) {
+          fetch('/get-name')
+            .then(res => res.json())
+            .then(nameData => {
+              if (nameData && nameData.name) {
+                userName = nameData.name;
+              }
+              triggerGreeting();
+            })
+            .catch(err => {
+              console.error('Error fetching user name:', err);
+              triggerGreeting();
+            });
+        } else {
+          triggerGreeting();
+        }
 
         loadConversations();
       })
@@ -1482,6 +2045,10 @@
       if (window.currentStopReveal) {
         window.currentStopReveal();
       }
+
+      // Auto-dismiss guest banner and hero greeting on first message
+      dismissGuestBanner();
+      hideHeroGreeting();
 
       // 1. Render User message bubble
       appendMessageBubble(text, 'user');
@@ -1671,32 +2238,46 @@
     // Clean viewport layout resizing
     window.addEventListener('resize', scrollToBottom);
 
-    // Greeting logic for new/guest and returning users
+    // Greeting logic — centered hero text (ChatGPT-style)
+    const heroGreeting = document.getElementById('hero-greeting');
+
+    const heroGreetings = [
+      "Vibe check passed. What's the move",
+      "Algorithm brought me here. What's good",
+      "Loading the vibe... What are we working on rn",
+      "Pinged you. What's the energy today",
+      "Low-key just processing your requests. What's good",
+      "Delulu is the solulu, but I'm here for the real talk"
+    ];
+
     function triggerGreeting() {
-      if (userName === 'Guest') {
-        if (emptyState && emptyState.style.display !== 'none') {
-          emptyState.style.display = 'none';
+      if (!heroGreeting) return;
+
+      // Pick a random greeting
+      const base = heroGreetings[Math.floor(Math.random() * heroGreetings.length)];
+
+      // Append username naturally if not Guest
+      let greeting = base;
+      if (userName && userName !== 'Guest') {
+        // Add comma + name before any trailing punctuation
+        const lastChar = base.slice(-1);
+        if ('.?!'.includes(lastChar)) {
+          greeting = base.slice(0, -1) + ', ' + userName + lastChar;
+        } else {
+          greeting = base + ', ' + userName;
         }
-        const welcomeMessages = [
-          "Hello! I'm Maximus. I don't think we've met before — every conversation starts somewhere. What should I call you?",
-          "Oh, a new face. Welcome. I'm Maximus, and I'm glad you're here. Before we begin, what's your name?",
-          "Good to see you. I'm Maximus — a companion built for calm, clear conversation. I'd love to know who I'm speaking with. What should I call you?",
-          "Hello there. I'm Maximus. I find it's always nicer to talk when I know who I'm talking to. What's your name?"
-        ];
-        const greeting = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
-        appendMessageBubble(greeting, 'maximus');
       } else {
-        if (emptyState && emptyState.style.display !== 'none') {
-          emptyState.style.display = 'none';
-        }
-        const returningMessages = [
-          'Hey ' + userName + "! Good to have you back. What's on your mind today?",
-          'Welcome back, ' + userName + '. What can I do for you?',
-          userName + '! Good to see you again. What are we getting into today?',
-          'Back again, ' + userName + '? I like it. What do you need?'
-        ];
-        const returningGreeting = returningMessages[Math.floor(Math.random() * returningMessages.length)];
-        appendMessageBubble(returningGreeting, 'maximus');
+        greeting = base + (base.slice(-1).match(/[.?!]/) ? '' : '?');
+      }
+
+      // Render as centered hero text
+      heroGreeting.innerHTML = '<div class="hero-greeting-text">' + greeting + '</div>';
+      heroGreeting.classList.remove('hidden');
+    }
+
+    function hideHeroGreeting() {
+      if (heroGreeting && !heroGreeting.classList.contains('hidden')) {
+        heroGreeting.classList.add('hidden');
       }
     }
 
@@ -1706,6 +2287,27 @@
     function loadConversations(activeFilename) {
       if (activeFilename !== undefined) {
         activeLoadedFilename = activeFilename;
+      }
+
+      if (!historyList) return;
+      historyList.innerHTML = '';
+
+      // If guest (not authenticated), show subtle centered message
+      if (!isAuthenticated) {
+        const promptLi = document.createElement('li');
+        promptLi.className = 'history-guest-prompt';
+        promptLi.innerHTML = `
+          <p>Sign in to see your past conversations</p>
+          <a href="/login">
+            Sign In
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </a>
+        `;
+        historyList.appendChild(promptLi);
+        return;
       }
 
       fetch('/conversations')
@@ -1834,6 +2436,9 @@
         if (emptyState) {
           emptyState.style.display = 'none';
         }
+
+        // Hide hero greeting when loading a past conversation
+        hideHeroGreeting();
 
         // Stop active reveal or speech
         if (window.currentStopReveal) {
@@ -1967,8 +2572,26 @@
       });
     }
 
-    // Trigger greeting and load conversations on initial page load
-    window.onload = () => {
+    // SSE Wake Stream connection handler
+    function setupWakeStream() {
+      if (typeof EventSource === 'undefined') return;
+
+      const wakeSource = new EventSource('/wake-stream');
+
+      wakeSource.addEventListener('wake', () => {
+        if (!isListening) {
+          toggleListening();
+        }
+      });
+
+      wakeSource.onerror = (err) => {
+        console.warn('Wake stream connection lost. EventSource will automatically reconnect.', err);
+      };
+    }
+
+    // Session verification, greeting, conversations, and SSE wake stream on initial page load
+    window.onload = async () => {
+      await verifyUserSession();
       triggerGreeting();
       loadConversations();
     };
