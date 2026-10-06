@@ -224,6 +224,11 @@ def login():
 def signup():
     return render_template("signup.html")
 
+#User Logout Session
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({"ok": True})
 @app.route('/get-name', methods=['GET'])
 def get_name():
     return jsonify({"name": session.get("user_name", "Guest")})
