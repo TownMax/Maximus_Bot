@@ -5,19 +5,32 @@ import uuid
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from elevenlabs.client import ElevenLabs
+from elevenlabs import save
 from datetime import datetime
 from supabase import create_client, Client
+
 
 # Global Variables Scope
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client()
 
-#Supabse Data
+#Supabse Data Initialization
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+#ElevenLabs Voice Configuration
+#Load ElevenLabs credentials From .env environment variables
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
+ELEVENLABS_VOICE_ID =os.getenv("ELEVENLABS_VOICE_ID")
+
+#initialize the ElevenLabs Client Instance
+eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
+
+#Ensure the static audio folder exists so Flask can save and serve MP3 files
+os.makedirs("static/audio", exist_ok=True)
 
 # List of conversational memory trigger phrases
 memory_triggers = ["remember that",
@@ -227,8 +240,9 @@ def signup():
 #User Logout Session
 @app.route('/logout', methods=['POST'])
 def logout():
+    #Safely clear only the Flask session cookies for the current client
     session.clear()
-    return jsonify({"ok": True})
+    return jsonify({"status": "success", "message": "Logged out successfully"}), 200
 @app.route('/get-name', methods=['GET'])
 def get_name():
     return jsonify({"name": session.get("user_name", "Guest")})
@@ -348,50 +362,75 @@ def new_chat():
 
 @app.route('/chat', methods=['POST'])
 def chat_handler():
-    user_id = session.get("user_id")
-    memory = load_user_memory(user_id)
+    try:
+        user_id = session.get("user_id")
+        memory = load_user_memory(user_id)
 
-    user_message = request.json.get("message")
-    if not user_message:
-        return jsonify({"error": "No message provided"}), 400
+        user_message = request.json.get("message")
+        if not user_message:
+            return jsonify({"error": "No message provided"}), 400
 
-    if not session.get('conversation_id'):
-        session['conversation_id'] = str(uuid.uuid4())
+        if not session.get('conversation_id'):
+            session['conversation_id'] = str(uuid.uuid4())
 
-    history = get_history(user_id)
-    clean_message = user_message.lower().strip()
+        history = get_history(user_id)
+        clean_message = user_message.lower().strip()
 
-    #NAME TRIGGER DETECTION
-    for trigger in name_triggers:
-        if trigger in clean_message:
-            trigger_index = clean_message.find(trigger)
-            extracted = clean_message[trigger_index + len(trigger):].strip()
-            if is_likely_a_name(extracted):
-                memory["name"] = extracted.title()
-                save_user_memory(user_id, memory)
-                break
-
-    #MEMORY TRIGGER DETECTION
-    if any(trigger in clean_message for trigger in memory_triggers):
-        for trigger in memory_triggers:
+        #NAME TRIGGER DETECTION
+        for trigger in name_triggers:
             if trigger in clean_message:
-                clean_fact = user_message.replace(trigger, "").replace(trigger.capitalize(), "").strip()
-                memory["facts"].append(clean_fact)
-                save_user_memory(user_id, memory)
-                break
+                trigger_index = clean_message.find(trigger)
+                extracted = clean_message[trigger_index + len(trigger):].strip()
+                if is_likely_a_name(extracted):
+                    memory["name"] = extracted.title()
+                    save_user_memory(user_id, memory)
+                    break
 
-    chat = context_handler(memory, history)
+        #MEMORY TRIGGER DETECTION
+        if any(trigger in clean_message for trigger in memory_triggers):
+            for trigger in memory_triggers:
+                if trigger in clean_message:
+                    clean_fact = user_message.replace(trigger, "").replace(trigger.capitalize(), "").strip()
+                    memory["facts"].append(clean_fact)
+                    save_user_memory(user_id, memory)
+                    break
 
-    history.append({"role": "user", "parts": [{"text": user_message}]})
-    response = chat.send_message(user_message)
-    ai_response = response.text
-    history.append({"role": "model", "parts": [{"text": ai_response}]})
+        chat = context_handler(memory, history)
 
-    put_history(user_id, history)
+        history.append({"role": "user", "parts": [{"text": user_message}]})
+        response = chat.send_message(user_message)
+        ai_response = response.text
+        history.append({"role": "model", "parts": [{"text": ai_response}]})
 
-    return jsonify({"response": ai_response})
+        put_history(user_id, history)
+
+        #Generate ElevenLabs Audio File
+        audio_url = None
+        if ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID:
+            try:
+                audio_stream = eleven_client.text_to_speech.convert(
+                    voice_id=ELEVENLABS_VOICE_ID,
+                    text=ai_response,
+                    model_id="eleven_multilingual_v2"
+                )
+
+                audio_filename = f"{uuid.uuid4()}.mp3"
+                audio_filepath = os.path.join("static/audio", audio_filename)
+
+                with open(audio_filepath, "wb") as f:
+                    for chunk in audio_stream:
+                        f.write(chunk)
+
+                audio_url = f"/static/audio/{audio_filename}"
+            except Exception as tts_err:
+                print(f"ElevenLabs TTS Generation Error: {tts_err}")
+
+        return jsonify({"response": ai_response, "audio_url": audio_url})
+    except Exception as e:
+        print(f"Error in chat_handler: {e}")
+        return jsonify({"error": "An error occurred while processing"}), 500
 
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

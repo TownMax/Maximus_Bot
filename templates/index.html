@@ -1360,6 +1360,543 @@
         opacity: 0.8;
       }
     }
+
+    /* Soundwave Trigger Button (#voice-overlay-btn) */
+    #voice-overlay-btn {
+      background: none;
+      border: 1px solid transparent;
+      color: var(--color-text-muted);
+      cursor: pointer;
+      min-width: 40px;
+      min-height: 40px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
+      flex-shrink: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    #voice-overlay-btn:hover {
+      background-color: rgba(46, 51, 48, 0.04);
+      color: var(--color-text-charcoal);
+    }
+
+    #voice-overlay-btn:active {
+      transform: scale(0.94);
+    }
+
+    /* Fluid wave animation on hover with staggered delays */
+    #voice-overlay-btn svg line {
+      transform-origin: center;
+      transition: transform 0.3s ease, stroke 0.2s ease;
+    }
+
+    #voice-overlay-btn:hover svg line {
+      animation: fluidWave 1s infinite ease-in-out;
+    }
+
+    #voice-overlay-btn:hover svg line:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    #voice-overlay-btn:hover svg line:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+
+    #voice-overlay-btn:hover svg line:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    #voice-overlay-btn:hover svg line:nth-child(4) {
+      animation-delay: 0.15s;
+    }
+
+    #voice-overlay-btn:hover svg line:nth-child(5) {
+      animation-delay: 0s;
+    }
+
+    @keyframes fluidWave {
+      0%, 100% {
+        transform: scaleY(1);
+      }
+      50% {
+        transform: scaleY(1.75);
+      }
+    }
+
+    /* -------------------------------------------------------------
+       LIVE VOICE OVERLAY (SCOPED UNDER #voice-overlay)
+       ------------------------------------------------------------- */
+    #voice-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(18, 22, 20, 0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 1.25rem 2rem;
+      color: #FAF9F6;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease, backdrop-filter 0.35s ease;
+      box-sizing: border-box;
+    }
+
+    #voice-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Header */
+    #voice-overlay .voice-overlay-header {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.25rem;
+      box-sizing: border-box;
+    }
+
+    #voice-overlay .voice-overlay-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    #voice-overlay .voice-overlay-title {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      color: #FAF9F6;
+      opacity: 0.92;
+    }
+
+    #voice-overlay .voice-close-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #FAF9F6;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-sizing: border-box;
+    }
+
+    #voice-overlay .voice-close-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
+    }
+
+    #voice-overlay .voice-close-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Center Visualizer */
+    #voice-overlay .voice-visualizer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      position: relative;
+      width: 100%;
+    }
+
+    #voice-overlay .voice-visualizer {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Concentric Wave Rings */
+    #voice-overlay .wave-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      border: 1.5px solid rgba(115, 144, 124, 0.25);
+      box-sizing: border-box;
+      transition: all 0.5s ease;
+    }
+
+    #voice-overlay .wave-ring.ring-1 {
+      width: 150px;
+      height: 150px;
+    }
+
+    #voice-overlay .wave-ring.ring-2 {
+      width: 200px;
+      height: 200px;
+    }
+
+    #voice-overlay .wave-ring.ring-3 {
+      width: 250px;
+      height: 250px;
+    }
+
+    /* Core Orb */
+    #voice-overlay .voice-orb {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #9cb8a5, #73907c 60%, #445b4c);
+      box-shadow: 0 0 35px rgba(115, 144, 124, 0.45), inset 0 0 20px rgba(255, 255, 255, 0.25);
+      transition: transform 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
+      z-index: 2;
+      box-sizing: border-box;
+    }
+
+    #voice-overlay .voice-orb-glow {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(115, 144, 124, 0.35), transparent 70%);
+      filter: blur(8px);
+      pointer-events: none;
+    }
+
+    /* 1. STATE: LISTENING - Gentle 2.5s breathing scaling animation in sage glow */
+    #voice-overlay .voice-orb.state-listening {
+      animation: orbListeningBreath 2.5s infinite ease-in-out;
+    }
+
+    #voice-overlay .voice-orb.state-listening ~ .wave-ring.ring-1 {
+      animation: ringListeningPulse 2.5s infinite ease-in-out;
+    }
+
+    #voice-overlay .voice-orb.state-listening ~ .wave-ring.ring-2 {
+      animation: ringListeningPulse 2.5s infinite ease-in-out 0.4s;
+    }
+
+    #voice-overlay .voice-orb.state-listening ~ .wave-ring.ring-3 {
+      animation: ringListeningPulse 2.5s infinite ease-in-out 0.8s;
+    }
+
+    @keyframes orbListeningBreath {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(115, 144, 124, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.25);
+      }
+      50% {
+        transform: scale(1.08);
+        box-shadow: 0 0 50px rgba(115, 144, 124, 0.7), inset 0 0 25px rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    @keyframes ringListeningPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.3;
+        border-color: rgba(115, 144, 124, 0.25);
+      }
+      50% {
+        transform: scale(1.06);
+        opacity: 0.65;
+        border-color: rgba(115, 144, 124, 0.55);
+      }
+    }
+
+    /* 2. STATE: THINKING - Glowing 1s rotation pulse */
+    #voice-overlay .voice-orb.state-thinking {
+      background: radial-gradient(circle at 35% 35%, #b5cbbe, #73907c 50%, #2f4336);
+      animation: orbThinkingRotate 1s infinite linear, orbThinkingPulse 1.2s infinite ease-in-out;
+    }
+
+    #voice-overlay .voice-orb.state-thinking ~ .wave-ring {
+      animation: ringThinkingSpin 2s infinite linear;
+      border-style: dashed;
+      border-color: rgba(115, 144, 124, 0.4);
+    }
+
+    @keyframes orbThinkingRotate {
+      0% {
+        filter: hue-rotate(0deg);
+      }
+      50% {
+        filter: hue-rotate(25deg);
+      }
+      100% {
+        filter: hue-rotate(0deg);
+      }
+    }
+
+    @keyframes orbThinkingPulse {
+      0%, 100% {
+        transform: scale(0.96);
+        box-shadow: 0 0 35px rgba(162, 192, 172, 0.5);
+      }
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 55px rgba(181, 215, 192, 0.85);
+      }
+    }
+
+    @keyframes ringThinkingSpin {
+      0% {
+        transform: rotate(0deg) scale(0.98);
+        opacity: 0.4;
+      }
+      50% {
+        transform: rotate(180deg) scale(1.04);
+        opacity: 0.7;
+      }
+      100% {
+        transform: rotate(360deg) scale(0.98);
+        opacity: 0.4;
+      }
+    }
+
+    /* 3. STATE: SPEAKING - Concentric acoustic ripple expansion keyframes */
+    #voice-overlay .voice-orb.state-speaking {
+      animation: orbSpeakingBounce 0.8s infinite ease-in-out;
+      background: radial-gradient(circle at 35% 35%, #d1e2d7, #73907c 60%, #3a4e40);
+      box-shadow: 0 0 45px rgba(115, 144, 124, 0.75);
+    }
+
+    #voice-overlay .voice-orb.state-speaking ~ .wave-ring.ring-1 {
+      animation: acousticRipple 1.8s infinite cubic-bezier(0.2, 0.7, 0.4, 1);
+    }
+
+    #voice-overlay .voice-orb.state-speaking ~ .wave-ring.ring-2 {
+      animation: acousticRipple 1.8s infinite cubic-bezier(0.2, 0.7, 0.4, 1) 0.5s;
+    }
+
+    #voice-overlay .voice-orb.state-speaking ~ .wave-ring.ring-3 {
+      animation: acousticRipple 1.8s infinite cubic-bezier(0.2, 0.7, 0.4, 1) 1s;
+    }
+
+    @keyframes orbSpeakingBounce {
+      0%, 100% {
+        transform: scale(0.98);
+      }
+      30% {
+        transform: scale(1.12);
+      }
+      60% {
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes acousticRipple {
+      0% {
+        transform: scale(0.65);
+        opacity: 0.9;
+        border-color: rgba(162, 192, 172, 0.85);
+      }
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+        border-color: rgba(115, 144, 124, 0);
+      }
+    }
+
+    /* Status Indicator Text */
+    #voice-overlay .voice-status-wrapper {
+      margin-top: 2.25rem;
+      text-align: center;
+    }
+
+    #voice-overlay .voice-status-text {
+      font-family: var(--font-sans);
+      font-size: 1.05rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      color: rgba(250, 249, 246, 0.85);
+      margin: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Bottom Controls */
+    #voice-overlay .voice-controls-bar {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 0;
+      box-sizing: border-box;
+    }
+
+    #voice-overlay .voice-pill-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #FAF9F6;
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: var(--transition-fast);
+      box-sizing: border-box;
+    }
+
+    #voice-overlay .voice-pill-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    #voice-overlay .voice-pill-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    #voice-overlay .voice-mute-btn.muted {
+      background: rgba(178, 93, 78, 0.25);
+      border-color: rgba(178, 93, 78, 0.5);
+      color: #F8D7DA;
+    }
+
+    #voice-overlay .voice-end-btn {
+      background: rgba(178, 93, 78, 0.2);
+      border-color: rgba(178, 93, 78, 0.4);
+      color: #FAF9F6;
+    }
+
+    #voice-overlay .voice-end-btn:hover {
+      background: rgba(178, 93, 78, 0.35);
+      border-color: rgba(178, 93, 78, 0.6);
+    }
+
+    /* Responsive Overlay Scaling */
+    /* Small Mobile Phones (< 600px) */
+    @media (max-width: 599.98px) {
+      #voice-overlay {
+        padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+      }
+
+      #voice-overlay .voice-visualizer {
+        width: 220px;
+        height: 220px;
+      }
+
+      #voice-overlay .voice-orb {
+        width: 180px;
+        height: 180px;
+      }
+
+      #voice-overlay .wave-ring.ring-1 {
+        width: 200px;
+        height: 200px;
+      }
+
+      #voice-overlay .wave-ring.ring-2 {
+        width: 230px;
+        height: 230px;
+      }
+
+      #voice-overlay .wave-ring.ring-3 {
+        width: 260px;
+        height: 260px;
+      }
+
+      #voice-overlay .voice-status-text {
+        font-size: 0.95rem;
+      }
+
+      #voice-overlay .voice-controls-bar {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        gap: 0.75rem;
+      }
+    }
+
+    /* Tablets & iPads (768px - 1024px) */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      #voice-overlay .voice-visualizer {
+        width: 320px;
+        height: 320px;
+      }
+
+      #voice-overlay .voice-orb {
+        width: 240px;
+        height: 240px;
+      }
+
+      #voice-overlay .wave-ring.ring-1 {
+        width: 270px;
+        height: 270px;
+      }
+
+      #voice-overlay .wave-ring.ring-2 {
+        width: 310px;
+        height: 310px;
+      }
+
+      #voice-overlay .wave-ring.ring-3 {
+        width: 350px;
+        height: 350px;
+      }
+
+      #voice-overlay .voice-overlay-title {
+        font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+      }
+
+      #voice-overlay .voice-status-text {
+        font-size: clamp(1rem, 2vw, 1.25rem);
+      }
+    }
+
+    /* Laptops & Large Screens (> 1024px) */
+    @media (min-width: 1024.02px) {
+      #voice-overlay .voice-visualizer {
+        width: 400px;
+        height: 400px;
+      }
+
+      #voice-overlay .voice-orb {
+        width: 300px;
+        height: 300px;
+        box-shadow: 0 0 60px rgba(115, 144, 124, 0.55), inset 0 0 35px rgba(255, 255, 255, 0.3);
+      }
+
+      #voice-overlay .voice-orb-glow {
+        inset: -20px;
+        filter: blur(20px);
+      }
+
+      #voice-overlay .wave-ring.ring-1 {
+        width: 340px;
+        height: 340px;
+      }
+
+      #voice-overlay .wave-ring.ring-2 {
+        width: 390px;
+        height: 390px;
+      }
+
+      #voice-overlay .wave-ring.ring-3 {
+        width: 440px;
+        height: 440px;
+        border-color: rgba(115, 144, 124, 0.35);
+      }
+
+      #voice-overlay .voice-status-text {
+        font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+      }
+    }
   </style>
 </head>
 <body>
@@ -1605,6 +2142,16 @@
             aria-label="Write your message"
             maxlength="1000"
           ></textarea>
+          <!-- Live Voice Overlay Trigger Button -->
+          <button id="voice-overlay-btn" class="voice-overlay-btn" type="button" aria-label="Open live voice mode" onclick="openVoiceOverlay()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="4" y1="8" x2="4" y2="16"></line>
+              <line x1="8" y1="4" x2="8" y2="20"></line>
+              <line x1="12" y1="7" x2="12" y2="17"></line>
+              <line x1="16" y1="5" x2="16" y2="19"></line>
+              <line x1="20" y1="8" x2="20" y2="16"></line>
+            </svg>
+          </button>
           <button id="send-btn" class="send-btn" type="button" aria-label="Send message" onclick="sendMessage()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" x2="12" y1="19" y2="5"/>
@@ -1810,8 +2357,11 @@
 
       recognition.onstart = () => {
         isListening = true;
-        micInputBtn.classList.add('listening');
-        micInputBtn.setAttribute('aria-label', 'Listening for speech...');
+        const btn = document.getElementById('mic-input-btn');
+        if (btn) {
+          btn.classList.add('listening');
+          btn.setAttribute('aria-label', 'Listening for speech...');
+        }
 
         // Interrupt ongoing speech output when user begins speaking new input
         window.speechSynthesis.cancel();
@@ -1819,15 +2369,17 @@
 
       recognition.onend = () => {
         isListening = false;
-        micInputBtn.classList.remove('listening');
-        micInputBtn.setAttribute('aria-label', 'Start voice input');
+        const btn = document.getElementById('mic-input-btn');
+        if (btn) {
+          btn.classList.remove('listening');
+          btn.setAttribute('aria-label', 'Start voice input');
+        }
       };
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         if (transcript) {
-          const currentValue = userInput.value;
-          userInput.value = currentValue ? (currentValue + ' ' + transcript) : transcript;
+          userInput.value = transcript;
           
           // Dispatch input event to grow textarea and activate send button
           userInput.dispatchEvent(new Event('input'));
@@ -1841,7 +2393,10 @@
       recognition.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         isListening = false;
-        micInputBtn.classList.remove('listening');
+        const btn = document.getElementById('mic-input-btn');
+        if (btn) {
+          btn.classList.remove('listening');
+        }
       };
     }
 
@@ -2088,90 +2643,14 @@
             emptyState.style.display = 'none';
           }
           
-          // Create the bubble empty first
-          const responseRow = appendMessageBubble('', 'maximus');
-          const bubble = responseRow.querySelector('.msg-bubble');
-          
-          // Remove the typing indicator now that the bubble is ready
+          // Append Maximus's text response to #chat-window
+          appendMessageBubble(data.response, 'maximus');
           removeTypingIndicator();
 
-          // Prepare character reveal variables
-          const fullText = data.response;
-          let currentCharIndex = 0;
-          
-          // Show the stop button
-          const stopContainer = document.getElementById('stop-generation-container');
-          if (stopContainer) stopContainer.style.display = 'flex';
-
-          let revealInterval = null;
-          
-          const checkHideStopButton = () => {
-            const isSpeechActive = window.speechSynthesis.speaking && wasVoiceInput;
-            if (!revealInterval && !isSpeechActive) {
-              if (stopContainer) stopContainer.style.display = 'none';
-            }
-          };
-
-          const finishReveal = () => {
-            if (revealInterval) {
-              clearInterval(revealInterval);
-              revealInterval = null;
-            }
-            checkHideStopButton();
-            window.currentStopReveal = null;
-            scrollToBottom();
-          };
-
-          // Expose stop function globally
-          window.currentStopReveal = () => {
-            if (revealInterval) {
-              clearInterval(revealInterval);
-              revealInterval = null;
-            }
-            bubble.textContent = data.response;
-            window.speechSynthesis.cancel();
-            if (stopContainer) stopContainer.style.display = 'none';
-            window.currentStopReveal = null;
-            scrollToBottom();
-          };
-
-          // Start progressive typing reveal (character-by-character)
-          revealInterval = setInterval(() => {
-            if (currentCharIndex < fullText.length) {
-              bubble.textContent += fullText[currentCharIndex];
-              currentCharIndex++;
-              scrollToBottom();
-            } else {
-              finishReveal();
-            }
-          }, 8); // extremely smooth, fast character typing (8ms interval)
-
-          // If the message was voice-triggered, start speech synthesis of the full text at the same time
-          if (wasVoiceInput) {
-            window.speechSynthesis.cancel();
-
-            const utterance = new SpeechSynthesisUtterance(data.response);
-            const voices = window.speechSynthesis.getVoices();
-
-            let selectedVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('natural')) ||
-                                voices.find(v => v.lang.startsWith('en') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google'))) ||
-                                voices.find(v => v.lang.startsWith('en') && (v.name.toLowerCase().includes('zira') || v.name.toLowerCase().includes('samantha') || v.name.toLowerCase().includes('hazel'))) ||
-                                voices.find(v => v.lang.startsWith('en'));
-
-            if (selectedVoice) {
-              utterance.voice = selectedVoice;
-            }
-            utterance.pitch = 1.0;
-            utterance.rate = 0.95;
-
-            utterance.onend = () => {
-              checkHideStopButton();
-            };
-            utterance.onerror = () => {
-              checkHideStopButton();
-            };
-
-            window.speechSynthesis.speak(utterance);
+          // Check if voice input was used and play ElevenLabs audio if available
+          if (wasVoiceInput && data.audio_url) {
+            const audio = new Audio(data.audio_url);
+            audio.play().catch(err => console.error("Audio playback failed:", err));
           }
 
           // Refresh sidebar history if this is the first message in the conversation
@@ -2184,7 +2663,7 @@
           if (errorBanner) errorBanner.style.display = 'flex';
         }
 
-        // Reset the voice-triggered flag back to false after each response
+        // Reset flag at the end of the fetch promise
         wasVoiceInput = false;
         scrollToBottom();
       })
@@ -2589,6 +3068,74 @@
       };
     }
 
+    // -------------------------------------------------------------
+    // LIVE VOICE OVERLAY CONTROLS
+    // -------------------------------------------------------------
+    let isVoiceMuted = false;
+
+    function openVoiceOverlay() {
+      const overlay = document.getElementById('voice-overlay');
+      if (!overlay) return;
+      overlay.style.display = 'flex';
+      void overlay.offsetWidth; // Force reflow for smooth opacity transition
+      overlay.classList.add('active');
+      overlay.setAttribute('aria-hidden', 'false');
+      setVoiceState('listening');
+    }
+
+    function closeVoiceOverlay() {
+      const overlay = document.getElementById('voice-overlay');
+      if (!overlay) return;
+      overlay.classList.remove('active');
+      overlay.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        if (!overlay.classList.contains('active')) {
+          overlay.style.display = 'none';
+        }
+      }, 350);
+    }
+
+    function setVoiceState(state) {
+      const orb = document.getElementById('voice-orb');
+      const statusText = document.getElementById('voice-status-text');
+      if (!orb) return;
+
+      orb.classList.remove('state-listening', 'state-thinking', 'state-speaking');
+
+      const s = (state || 'listening').toLowerCase();
+      orb.classList.add(`state-${s}`);
+
+      if (statusText) {
+        if (s === 'listening') {
+          statusText.textContent = 'Listening...';
+        } else if (s === 'thinking') {
+          statusText.textContent = 'Thinking...';
+        } else if (s === 'speaking') {
+          statusText.textContent = 'Speaking...';
+        } else {
+          statusText.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+        }
+      }
+    }
+
+    function toggleVoiceMute() {
+      isVoiceMuted = !isVoiceMuted;
+      const label = document.getElementById('voice-mute-label');
+      const btn = document.getElementById('voice-mute-btn');
+      if (label) label.textContent = isVoiceMuted ? 'Unmute' : 'Mute';
+      if (btn) btn.classList.toggle('muted', isVoiceMuted);
+    }
+
+    // Close overlay on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const overlay = document.getElementById('voice-overlay');
+        if (overlay && overlay.classList.contains('active')) {
+          closeVoiceOverlay();
+        }
+      }
+    });
+
     // Session verification, greeting, conversations, and SSE wake stream on initial page load
     window.onload = async () => {
       await syncSupabaseSession();
@@ -2597,5 +3144,55 @@
       loadConversations();
     };
   </script>
+  <!-- Live Voice Overlay Modal -->
+  <div id="voice-overlay" class="voice-overlay" aria-hidden="true" style="display: none;">
+    <!-- Header with Close ("X") button -->
+    <div class="voice-overlay-header">
+      <div class="voice-overlay-brand">
+        <span class="voice-overlay-title">Maximus Voice</span>
+      </div>
+      <button type="button" class="voice-close-btn" onclick="closeVoiceOverlay()" aria-label="Close voice mode">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Center visualizer: core orb + 3 concentric wave rings + indicator text -->
+    <div class="voice-visualizer-container">
+      <div class="voice-visualizer">
+        <div class="voice-orb state-listening" id="voice-orb">
+          <div class="voice-orb-glow"></div>
+        </div>
+        <div class="wave-ring ring-1"></div>
+        <div class="wave-ring ring-2"></div>
+        <div class="wave-ring ring-3"></div>
+      </div>
+
+      <div class="voice-status-wrapper">
+        <p class="voice-status-text" id="voice-status-text">Listening...</p>
+      </div>
+    </div>
+
+    <!-- Bottom Control bar: "Mute" and "End Session" pill buttons -->
+    <div class="voice-controls-bar">
+      <button type="button" class="voice-pill-btn voice-mute-btn" id="voice-mute-btn" onclick="toggleVoiceMute()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+          <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+          <line x1="12" y1="19" x2="12" y2="22"></line>
+        </svg>
+        <span class="voice-btn-label" id="voice-mute-label">Mute</span>
+      </button>
+
+      <button type="button" class="voice-pill-btn voice-end-btn" onclick="closeVoiceOverlay()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+        </svg>
+        <span>End Session</span>
+      </button>
+    </div>
+  </div>
 </body>
 </html>
