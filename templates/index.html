@@ -1563,6 +1563,7 @@
       transition: transform 0.4s ease, box-shadow 0.4s ease, background 0.4s ease;
       z-index: 2;
       box-sizing: border-box;
+      cursor: pointer;
     }
 
     #voice-overlay .voice-orb-glow {
@@ -1789,18 +1790,18 @@
       }
 
       #voice-overlay .voice-visualizer {
-        width: 220px;
-        height: 220px;
+        width: 280px;
+        height: 280px;
       }
 
       #voice-overlay .voice-orb {
-        width: 180px;
-        height: 180px;
+        width: 150px;
+        height: 150px;
       }
 
       #voice-overlay .wave-ring.ring-1 {
-        width: 200px;
-        height: 200px;
+        width: 190px;
+        height: 190px;
       }
 
       #voice-overlay .wave-ring.ring-2 {
@@ -1809,8 +1810,8 @@
       }
 
       #voice-overlay .wave-ring.ring-3 {
-        width: 260px;
-        height: 260px;
+        width: 270px;
+        height: 270px;
       }
 
       #voice-overlay .voice-status-text {
@@ -2338,11 +2339,16 @@
       }
     }
 
-    // Speech Recognition API setup
+    // Speech Recognition API setup & Live Voice State
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const micInputBtn = document.getElementById('mic-input-btn');
     let recognition = null;
     let isListening = false;
+
+    // Hands-free Voice Overlay state
+    let voiceSessionActive = false;
+    let voiceBusy = false;
+    let currentAudio = null;
 
     if (!SpeechRecognition) {
       // Hide microphone button if speech recognition is not supported in the browser
@@ -2374,11 +2380,25 @@
           btn.classList.remove('listening');
           btn.setAttribute('aria-label', 'Start voice input');
         }
+
+        // If live voice session is active, not busy, and not muted, restart listening after silence timeout
+        if (voiceSessionActive && !voiceBusy && !isVoiceMuted) {
+          setTimeout(() => {
+            if (voiceSessionActive && !voiceBusy && !isVoiceMuted && !isListening) {
+              startVoiceTurn();
+            }
+          }, 300);
+        }
       };
 
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         if (transcript) {
+          if (voiceSessionActive) {
+            handleVoiceTurn(transcript);
+            return;
+          }
+
           userInput.value = transcript;
           
           // Dispatch input event to grow textarea and activate send button
@@ -2397,6 +2417,16 @@
         if (btn) {
           btn.classList.remove('listening');
         }
+
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          alert('Microphone access is blocked. Please allow microphone permissions in your browser. (Note: HTTPS or localhost is required for speech recognition).');
+          if (voiceSessionActive) {
+            closeVoiceOverlay();
+          }
+          return;
+        }
+
+        // Ignore 'no-speech' and 'aborted' silently - onend will handle loop continuation if appropriate
       };
     }
 
@@ -2628,7 +2658,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text, want_audio: wasVoiceInput })
       })
       .then(response => {
         if (!response.ok) {
@@ -3074,18 +3104,163 @@
     let isVoiceMuted = false;
 
     function openVoiceOverlay() {
+      if (!recognition) {
+        alert('Live voice mode requires speech recognition, which is not supported by this browser (e.g., Firefox). Please use Google Chrome, Edge, or Safari.');
+        return;
+      }
+
       const overlay = document.getElementById('voice-overlay');
       if (!overlay) return;
+
+      // Stop any prior playback
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      window.speechSynthesis.cancel();
+
       overlay.style.display = 'flex';
       void overlay.offsetWidth; // Force reflow for smooth opacity transition
       overlay.classList.add('active');
       overlay.setAttribute('aria-hidden', 'false');
+
+      voiceSessionActive = true;
+      voiceBusy = false;
+      dismissGuestBanner();
+      hideHeroGreeting();
+
+      startVoiceTurn();
+    }
+
+    function startVoiceTurn() {
+      if (!voiceSessionActive || isVoiceMuted || !recognition) {
+        return;
+      }
+
+      voiceBusy = false;
       setVoiceState('listening');
+
+      try {
+        recognition.start();
+      } catch (err) {
+        // Recognition might already be running
+      }
+    }
+
+    function handleVoiceTurn(text) {
+      if (!voiceSessionActive || !text || !text.trim()) {
+        return;
+      }
+
+      voiceBusy = true;
+      setVoiceState('thinking');
+
+      // Append user bubble to main chat window
+      appendMessageBubble(text, 'user');
+      showTypingIndicator();
+      scrollToBottom();
+
+      fetch('/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: text, want_audio: true })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        removeTypingIndicator();
+
+        if (data && data.response) {
+          if (emptyState.style.display !== 'none') {
+            emptyState.style.display = 'none';
+          }
+          appendMessageBubble(data.response, 'maximus');
+          scrollToBottom();
+
+          if (isFirstMessage) {
+            loadConversations();
+            isFirstMessage = false;
+          }
+
+          if (voiceSessionActive && data.audio_url) {
+            if (currentAudio) {
+              currentAudio.pause();
+              currentAudio = null;
+            }
+
+            currentAudio = new Audio(data.audio_url);
+            setVoiceState('speaking');
+
+            currentAudio.play().catch(err => {
+              console.error('Audio playback failed:', err);
+              if (voiceSessionActive) {
+                startVoiceTurn();
+              }
+            });
+
+            currentAudio.onended = () => {
+              currentAudio = null;
+              if (voiceSessionActive) {
+                startVoiceTurn();
+              }
+            };
+          } else if (voiceSessionActive) {
+            startVoiceTurn();
+          }
+        } else {
+          if (errorBanner) errorBanner.style.display = 'flex';
+          if (voiceSessionActive) {
+            startVoiceTurn();
+          }
+        }
+      })
+      .catch(err => {
+        console.error('Voice chat fetch error:', err);
+        removeTypingIndicator();
+        if (errorBanner) errorBanner.style.display = 'flex';
+        if (voiceSessionActive) {
+          startVoiceTurn();
+        }
+      });
+    }
+
+    function handleOrbClick() {
+      // Barge-in: if user clicks orb while speaking, stop audio and resume listening
+      const orb = document.getElementById('voice-orb');
+      if (orb && orb.classList.contains('state-speaking')) {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+        }
+        startVoiceTurn();
+      }
     }
 
     function closeVoiceOverlay() {
+      voiceSessionActive = false;
+      voiceBusy = false;
+
+      if (recognition && isListening) {
+        try {
+          recognition.abort();
+        } catch (err) {}
+      }
+
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+      window.speechSynthesis.cancel();
+
       const overlay = document.getElementById('voice-overlay');
       if (!overlay) return;
+
       overlay.classList.remove('active');
       overlay.setAttribute('aria-hidden', 'true');
       setTimeout(() => {
@@ -3124,6 +3299,18 @@
       const btn = document.getElementById('voice-mute-btn');
       if (label) label.textContent = isVoiceMuted ? 'Unmute' : 'Mute';
       if (btn) btn.classList.toggle('muted', isVoiceMuted);
+
+      if (isVoiceMuted) {
+        if (recognition && isListening) {
+          try {
+            recognition.abort();
+          } catch (e) {}
+        }
+      } else {
+        if (voiceSessionActive && !voiceBusy) {
+          startVoiceTurn();
+        }
+      }
     }
 
     // Close overlay on Escape key
@@ -3162,7 +3349,7 @@
     <!-- Center visualizer: core orb + 3 concentric wave rings + indicator text -->
     <div class="voice-visualizer-container">
       <div class="voice-visualizer">
-        <div class="voice-orb state-listening" id="voice-orb">
+        <div class="voice-orb state-listening" id="voice-orb" onclick="handleOrbClick()">
           <div class="voice-orb-glow"></div>
         </div>
         <div class="wave-ring ring-1"></div>

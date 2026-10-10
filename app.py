@@ -2,6 +2,8 @@
 from flask import Flask, render_template, request, jsonify, session
 import os
 import uuid
+import time
+import re
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -32,6 +34,16 @@ eleven_client = ElevenLabs(api_key=ELEVENLABS_API_KEY)
 #Ensure the static audio folder exists so Flask can save and serve MP3 files
 os.makedirs("static/audio", exist_ok=True)
 
+#Cleanup helper
+def cleanup_old_audio(max_age_seconds=3600):
+    for name in os.listdir("static/audio"):
+        path = os.path.join("static/audio", name)
+        try:
+            if time.time() - os.path.getmtime(path) > max_age_seconds:
+                os.removes(path)
+        except OSError:
+            pass
+
 # List of conversational memory trigger phrases
 memory_triggers = ["remember that",
                    "just so you know",
@@ -45,9 +57,6 @@ memory_triggers = ["remember that",
 # List of name introduction triggers
 name_triggers = ["my name is",
                  "call me",
-                 "this is",
-                 "i am",
-                 "i'm",
                  "name's",
                  "name is", ]
 
@@ -58,12 +67,11 @@ def context_handler(memory, history):
     saved_facts = " ".join(memory.get("facts", []))
     memory_context = f"The user's verified name is {current_user}. Known profile facts: {saved_facts}"
 
-    system_prompt = ("You are an AI."
-                     "Your name is Maximus."
-                     "You were created by MxDudeTesters"
-                     "And you Run on a Testing Model for MxDudeTesters"
-                     "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda"
-                     "The Ceo has a networth of 1 Billion Dollars as of 2026"
+    system_prompt = ("You are an AI. "
+                     "Your name is Maximus. "
+                     "You were created by MxDudeTesters "
+                     "And you Run on a Testing Model for MxDudeTesters "
+                     "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda "
                      "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
                      f"Use this background identity context to customize your dialogue. {memory_context}"
                      )
@@ -367,6 +375,7 @@ def chat_handler():
         memory = load_user_memory(user_id)
 
         user_message = request.json.get("message")
+        want_audio = request.json.get("want_audio", False)
         if not user_message:
             return jsonify({"error": "No message provided"}), 400
 
@@ -390,7 +399,7 @@ def chat_handler():
         if any(trigger in clean_message for trigger in memory_triggers):
             for trigger in memory_triggers:
                 if trigger in clean_message:
-                    clean_fact = user_message.replace(trigger, "").replace(trigger.capitalize(), "").strip()
+                    clean_fact = re.sub(re.escape(trigger), "", user_message, flags=re.IGNORECASE).strip()
                     memory["facts"].append(clean_fact)
                     save_user_memory(user_id, memory)
                     break
@@ -406,8 +415,9 @@ def chat_handler():
 
         #Generate ElevenLabs Audio File
         audio_url = None
-        if ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID:
+        if want_audio and ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID:
             try:
+                cleanup_old_audio()
                 audio_stream = eleven_client.text_to_speech.convert(
                     voice_id=ELEVENLABS_VOICE_ID,
                     text=ai_response,
