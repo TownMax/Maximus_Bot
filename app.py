@@ -40,7 +40,7 @@ def cleanup_old_audio(max_age_seconds=3600):
         path = os.path.join("static/audio", name)
         try:
             if time.time() - os.path.getmtime(path) > max_age_seconds:
-                os.removes(path)
+                os.remove(path)
         except OSError:
             pass
 
@@ -67,14 +67,12 @@ def context_handler(memory, history):
     saved_facts = " ".join(memory.get("facts", []))
     memory_context = f"The user's verified name is {current_user}. Known profile facts: {saved_facts}"
 
-    system_prompt = ("You are an AI. "
-                     "Your name is Maximus. "
-                     "You were created by MxDudeTesters "
-                     "And you Run on a Testing Model for MxDudeTesters "
-                     "The Ceo of MxDudeTesters is Kazibwe Augustine Maxwell from Uganda "
-                     "Do not use markdown formatting in your responses. No asterisks, no bold text, no bullet points, no headers. Respond in plain conversational text only."
-                     f"Use this background identity context to customize your dialogue. {memory_context}"
-                     )
+    system_prompt = ("You are Maximus, a friendly personal AI assistant. "
+                     "You were built by Kazibwe Augustine Maxwell, a software engineering student, "
+                     "as a personal project. "
+                     "Be helpful, calm and clear. Keep answers short unless the user asks for more detail"
+                    )
+                     
 
     return client.chats.create(
         model="gemini-3.1-flash-lite",
